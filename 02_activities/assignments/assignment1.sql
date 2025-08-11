@@ -111,7 +111,7 @@ VALUES(col1,col2,col3,col4,col5)
 drop table if exists temp.new_vendor; 
 create table temp.new_vendor as select * from vendor; 
 insert into temp.new_vendor(vendor_id, vendor_name, vendor_type, vendor_owner_first_name, vendor_owner_last_name) 
-values (10, 'Taj Sweets', 'Prepared Foods', 'John', 'Doe'); 
+values (10, 'Thomass Superfood Store', 'Fresh Focused', 'Thomas', 'Rosenthal'); 
 
 
 -- Date
