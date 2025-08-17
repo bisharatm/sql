@@ -63,11 +63,9 @@ There is a one-to-one relationship between CUSTOMER and CUSTOMER_ADDRESS tables.
 ##### Architecture for CUSTOMER_ADDRESS, using SCD Type 2: 
 There is a one-to-many relationship from CUSTOMER table to CUSTOMER_ADDRESS table. For each customer there may be multiple addresses, however, only **one** will be considered as the *active* address. This is indicated by a boolean `is_current` attribute in CUSTOMER_ADDRESS table. When a customer changes their address, their old address(es) is/are updated with `is_current=false`, and a **new** record is inserted in CUSTOMER_ADDRESS with `is_current=true`. Optionally, two date attributes such as `addr_effective_start` (date) and `addr_effective_end` (date) can be included in the CUSTOMER_ADDRESS table definition to record the dates during which each address was effective. This architecture reflects SCD Type 2.
 
-
-### Constraints in **CUSTOMER_ADDRESS** table with FK `CUSTOMER_ADDRESS.customer_id` referencing PK `customer_id.CUSTOMER`:
+##### Constraints in **CUSTOMER_ADDRESS** table with FK `CUSTOMER_ADDRESS.customer_id` referencing PK `customer_id.CUSTOMER`:
 * `customer_id` is `NOT NULL` to ensure an address record must always have an associated customer record
 * In case of SCD Type 1, `customer_id` may be used as the PK also due to the one-to-one mapping with the PK-table CUSTOMER, or alternatively, if another PK is created/chosen, then `customer_id` is `NOT NULL` and `UNIQUE`
-```
 
 ***
 
