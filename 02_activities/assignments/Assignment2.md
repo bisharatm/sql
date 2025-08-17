@@ -53,20 +53,20 @@ The store wants to keep customer addresses. Propose two architectures for the CU
 
 **HINT:** search type 1 vs type 2 slowly changing dimensions. 
 
-```
-Answer to Prompt 3:
+##### Answer to Prompt 3:
 
-Background: Slowly Changing Dimension (SDC) is a concept that determines how updates to attribute values of a dimension (table) will be handled. In SDC Type 1, updating an attribute value is achieved by overwriting existing data. It does not support retaining historic values for the underlying attribute(s). In SDC Type 2, updates to attribute values is achieved by adding new records. This allows the database to keep historic values, and supports the analysis of how certain attributes have changed over time if required.
+##### Background: Slowly Changing Dimension (SCD) is a concept that determines how updates to attribute values of a dimension (table) will be handled. In SCD Type 1, updating an attribute value is achieved by overwriting existing data. It does not support retaining historic values for the underlying attribute(s). In SCD Type 2, updates to attribute values is achieved by adding new records. This allows the database to keep historic values, and supports the analysis of how certain attributes have changed over time if required.
 
-### Architecture for CUSTOMER_ADDRESS, using SDC Type 1:
-There is a one-to-one relationship between CUSTOMER and CUSTOMER_ADDRESS tables. For each record in CUSTOMER there will at most ONE address record in CUSTOMER_ADDRESS. When a customer's address changes, this will be recorded by updating the customer's existing address record in CUSTOMER_ADDRESS, thereby overwriting the older address. This architecture reflects SDC Type 1.
+##### Architecture for CUSTOMER_ADDRESS, using SCD Type 1:
+There is a one-to-one relationship between CUSTOMER and CUSTOMER_ADDRESS tables. For each record in CUSTOMER there will at most ONE address record in CUSTOMER_ADDRESS. When a customer's address changes, this will be recorded by updating the customer's existing address record in CUSTOMER_ADDRESS, thereby overwriting the older address. This architecture reflects SCD Type 1.
 
-### Using SCD Type 2 architecture for CUSTOMER_ADDRESS: There is a one-to-many relationship from CUSTOMER table to CUSTOMER_ADDRESS table. For each customer there may be multiple addresses, however, only ONE will be considered as the active address. This is indicated by a boolean IS_CURRENT attribute in CUSTOMER_ADDRESS table. When a customer changes their address, their older address(es) is/are updated with IS_CURRENT=false, and a NEW record is inserted in CUSTOMER_ADDRESS with IS_CURRENT=true. Optionally, two date attributes such as ADDR_EFFECTIVE_START (date) to ADDR_EFFECTIVE_END (date) can be included in the CUSTOMER_ADDRESS table definition to record the dates during which each address was effective. This architecture reflects SDC Type 2.
+##### Architecture for CUSTOMER_ADDRESS, using SCD Type 2: 
+There is a one-to-many relationship from CUSTOMER table to CUSTOMER_ADDRESS table. For each customer there may be multiple addresses, however, only **one** will be considered as the *active* address. This is indicated by a boolean `is_current` attribute in CUSTOMER_ADDRESS table. When a customer changes their address, their old address(es) is/are updated with `is_current=false`, and a **new** record is inserted in CUSTOMER_ADDRESS with `is_current=true`. Optionally, two date attributes such as `addr_effective_start` (date) and `addr_effective_end` (date) can be included in the CUSTOMER_ADDRESS table definition to record the dates during which each address was effective. This architecture reflects SCD Type 2.
 
 
-### Constraints in CUSTOMER_ADDRESS table with FK CUSTOMER_ADDRESS.customer_id referencing PK customer_id.CUSTOMER:
-* customer_id is NOT NULL to ensure an address record must have associated customer record
-* In case of SDC Type 1, customer_id may be used as the PK due to the one-to-one mapping with the PK-table CUSTOMER, or alternatively, if a another PK is created, then customer_id is NOT NULL and UNIQUE
+### Constraints in **CUSTOMER_ADDRESS** table with FK `CUSTOMER_ADDRESS.customer_id` referencing PK `customer_id.CUSTOMER`:
+* `customer_id` is `NOT NULL` to ensure an address record must always have an associated customer record
+* In case of SCD Type 1, `customer_id` may be used as the PK also due to the one-to-one mapping with the PK-table CUSTOMER, or alternatively, if another PK is created/chosen, then `customer_id` is `NOT NULL` and `UNIQUE`
 ```
 
 ***
