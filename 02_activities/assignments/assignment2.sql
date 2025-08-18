@@ -127,40 +127,40 @@ with a UNION binding them. */
 
 -- APPROACH 1: Using CTE and dense_rank window function; potential ties (if any) for highest and lowest total sales are properly handled
 with market_sales as (
-	select market_date, sum(quantity * cost_to_customer_per_qty) as total_market_sale 
-	from customer_purchases 
+	select market_date, sum(quantity * cost_to_customer_per_qty) as total_market_sale
+	from customer_purchases
 	group by market_date
 )
 select * from (
-	-- markets ranked by highest total sales; there can be ties for highest total sales 
+	-- markets ranked by highest total sales; there can be ties for highest total sales
 	select market_date, total_market_sale, dense_rank() over (order by total_market_sale desc) as sale_rank, 'highest' as rank_label
 	from market_sales
 
-	union 
+	union
 
-	-- markets ranked by lowest total sales; there can be ties for lowest total sales 
-	select market_date, total_market_sale, dense_rank() over (order by total_market_sale) as sale_rank, 'lowest' as rank_label 
+	-- markets ranked by lowest total sales; there can be ties for lowest total sales
+	select market_date, total_market_sale, dense_rank() over (order by total_market_sale) as sale_rank, 'lowest' as rank_label
 	from market_sales
 )
 where sale_rank = 1;
 
 
 -- APPROACH 2: Using CTE and subqueries with order by and limit 1; only 1 highest and 1 lowest inspite of ties
--- create the CTE for market total sales 
+-- create the CTE for market total sales
 with market_total_sales as (
-	select market_date, sum(quantity * cost_to_customer_per_qty) as total_market_sale 
-	from customer_purchases 
+	select market_date, sum(quantity * cost_to_customer_per_qty) as total_market_sale
+	from customer_purchases
 	group by market_date
 )
 -- 1 market with higest total sale
-select market_date, total_market_sale, 'highest' as rank_label 
+select market_date, total_market_sale, 'highest' as rank_label
 from (select * from market_total_sales order by total_market_sale desc limit 1)
 
-union 
+union
 
 -- 1 market with lowest total sale
-select market_date, total_market_sale, 'lowest' as rank_label  
-from (select * from market_total_sales order by total_market_sale limit 1); 
+select market_date, total_market_sale, 'lowest' as rank_label
+from (select * from market_total_sales order by total_market_sale limit 1);
 
 
 
@@ -177,19 +177,70 @@ Think a bit about the row counts: how many distinct vendors, product names are t
 How many customers are there (y).
 Before your final group by you should have the product of those two queries (x*y).  */
 
+/* PRELIMINARY:
+1. There are only 8 products whose inventory is carried by only 3 vendors in vendor_inventory
+2. Each product inventory is carried by a different vendor, so in all there are 8 distinct pairings of vendor, product (see below)
++-----------+------------+
+| vendor_id | product_id |
++-----------+------------+
+|     4     |     16     |
+|     7     |      4     |
+|     7     |      1     |
+|     7     |      2     |
+|     7     |      3     |
+|     8     |      5     |
+|     8     |      7     |
+|     8     |      8     |
++-----------+------------+
+3. The vendor product inventory is spread across 142 markets count(distinct market_date)
+	in vendor_inventory table, and not 150 (as per market_date_info table).
 
+So, as per my understanding the above question is asking the following:
+	Suppose, each vendor had sold 5 (qty) of each of their products on every market date
+	that they carried inventory for (this is in vendor_inventory table) to every customer
+	on record (there are 126 total customers in customer table). How much money would
+	each vendor have made for each (of their) products?
+
+Check: 	Fields of Corn (vendor_id=4), Sweet Corn (product_id=16)
+		vendor_id=4 has (only) product_id=16 on various market dates (vendor_inventory);
+		selling 5 of this product to all 126 customers on all applicable market dates
+		(i.e., when vendor has inventory for this product), the vendor would have made
+		4,550.0
+*/
+
+select vendor_name, product_name, sum(sale_value)
+from
+	(
+	select
+		--market_date,
+		--vi.vendor_id,
+		v.vendor_name,
+		--vi.product_id,
+		p.product_name,
+		5 * original_price as sale_value, -- 5 (qty) of this vendor's product's sale value at this market
+		customer_id
+	from vendor_inventory vi
+	inner join vendor v on v.vendor_id = vi.vendor_id
+	inner join product p on p.product_id = vi.product_id
+	cross join customer	c
+	) cross_j
+group by vendor_name, product_name
+;
 
 -- INSERT
 /*1.  Create a new table "product_units".
 This table will contain only products where the `product_qty_type = 'unit'`.
 It should use all of the columns from the product table, as well as a new column for the `CURRENT_TIMESTAMP`.
 Name the timestamp column `snapshot_timestamp`. */
+drop table if exists product_units;
 
-
+create table if not exists product_units as
+select *, datetime('now') as snapshot_timestamp from product where product_qty_type='unit';
 
 /*2. Using `INSERT`, add a new row to the product_units table (with an updated timestamp).
 This can be any product you desire (e.g. add another record for Apple Pie). */
-
+insert into product_units
+values (99, 'Apple Pie II', '12"', 3, 'unit', datetime('now')); -- product_id 99
 
 
 -- DELETE
@@ -197,6 +248,8 @@ This can be any product you desire (e.g. add another record for Apple Pie). */
 
 HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
 
+delete from product_units
+where product_id = 99; 		-- delete record for product_id 99 only.
 
 
 -- UPDATE
