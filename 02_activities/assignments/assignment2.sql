@@ -20,6 +20,7 @@ The `||` values concatenate the columns into strings.
 Edit the appropriate columns -- you're making two edits -- and the NULL rows will be fixed.
 All the other rows will remain the same.) */
 
+-- ### ANSWER ###
 -- product_size and product_qty_type could be NULL, so applying coalesce on these:
 select
 	product_name || ', ' ||
@@ -39,6 +40,8 @@ You can either display all rows in the customer_purchases table, with the counte
 each new market date for each customer, or select only the unique market dates per customer
 (without purchase details) and number those visits.
 HINT: One of these approaches uses ROW_NUMBER() and one uses DENSE_RANK(). */
+
+-- ### ANSWER ###
 
 -- ### APPROACH 1, using row_number(): ###
 -- Purchases by a customer on the same market date are treated as seperate visits to that market
@@ -65,6 +68,8 @@ order by customer_id, market_date;
 /* 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1,
 then write another query that uses this one as a subquery (or temp table) and filters the results to
 only the customer’s most recent visit. */
+
+-- ### ANSWER ###
 select *
 from
 	(
@@ -81,6 +86,8 @@ order by customer_id;
 
 /* 3. Using a COUNT() window function, include a value along with each row of the
 customer_purchases table that indicates how many different times that customer has purchased that product_id. */
+
+-- ### ANSWER ###
 select distinct
 	customer_id, product_id,
 	count(*) over (partition by customer_id, product_id) as purchase_count
@@ -100,6 +107,7 @@ Remove any trailing or leading whitespaces. Don't just use a case statement for 
 
 Hint: you might need to use INSTR(product_name,'-') to find the hyphens. INSTR will help split the column. */
 
+-- ### ANSWER ###
 select
 	product_name,
 	trim(									-- 5. trim leading and trailing white space from substring
@@ -124,6 +132,7 @@ HINT: There are a possibly a few ways to do this query, but if you're struggling
 3) Query the second temp table twice, once for the best day, once for the worst day,
 with a UNION binding them. */
 
+-- ### ANSWER ###
 
 -- APPROACH 1: Using CTE and dense_rank window function; potential ties (if any) for highest and lowest total sales are properly handled
 with market_sales as (
@@ -177,17 +186,18 @@ Think a bit about the row counts: how many distinct vendors, product names are t
 How many customers are there (y).
 Before your final group by you should have the product of those two queries (x*y).  */
 
-/* PRELIMINARY:
+-- ### ANSWER ###
+/* Though process (SQL is further below):
 1. There are only 8 products whose inventory is carried by only 3 vendors in vendor_inventory
 2. Each product inventory is carried by a different vendor, so in all there are 8 distinct pairings of vendor, product (see below)
 +-----------+------------+
 | vendor_id | product_id |
 +-----------+------------+
 |     4     |     16     |
-|     7     |      4     |
 |     7     |      1     |
 |     7     |      2     |
 |     7     |      3     |
+|     7     |      4     |
 |     8     |      5     |
 |     8     |      7     |
 |     8     |      8     |
@@ -232,6 +242,8 @@ group by vendor_name, product_name
 This table will contain only products where the `product_qty_type = 'unit'`.
 It should use all of the columns from the product table, as well as a new column for the `CURRENT_TIMESTAMP`.
 Name the timestamp column `snapshot_timestamp`. */
+
+-- ### ANSWER ###
 drop table if exists product_units;
 
 create table if not exists product_units as
@@ -239,6 +251,8 @@ select *, datetime('now') as snapshot_timestamp from product where product_qty_t
 
 /*2. Using `INSERT`, add a new row to the product_units table (with an updated timestamp).
 This can be any product you desire (e.g. add another record for Apple Pie). */
+
+-- ### ANSWER ###
 insert into product_units
 values (99, 'Apple Pie II', '12"', 3, 'unit', datetime('now')); -- product_id 99
 
@@ -248,6 +262,7 @@ values (99, 'Apple Pie II', '12"', 3, 'unit', datetime('now')); -- product_id 99
 
 HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
 
+-- ### ANSWER ###
 delete from product_units
 where product_id = 99; 		-- delete record for product_id 99 only.
 
