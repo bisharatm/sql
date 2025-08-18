@@ -286,4 +286,35 @@ When you have all of these components, you can run the update statement. */
 
 
 
+-- ### ANSWER ###
 
+-- alter table to add new column for product's current quantity
+alter table product_units
+add current_quantity int;
+
+
+-- create a temporary table with the most recent product quantities  
+drop table if exists temp.last_product_qtys; 
+
+create table if not exists temp.last_product_qtys as 
+-- determining last quantiy for each product from vendor_inventory
+-- i.e., the quantity availble on the most recent market date for product_id group
+-- find the most recent market date for product, and then find the quantity for that date 
+	select vi.product_id, last_market_date, vi.quantity as last_quantity 
+	from vendor_inventory vi 
+	inner join (
+		select product_id, max(market_date) as last_market_date 
+		from vendor_inventory 
+		group by product_id
+	) last_qtys on vi.product_id = last_qtys.product_id and vi.market_date = last_qtys.last_market_date
+; 
+
+-- update the product_units table with data from the above temporary table 
+-- which has the most recent quantities for products 
+-- set 0 for missing/unavailable quantities 
+update product_units 
+set current_quantity = coalesce(
+	(select lpq.last_quantity  
+	from temp.last_product_qtys lpq 
+	where lpq.product_id = product_units.product_id), 0
+); 
